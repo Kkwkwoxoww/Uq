@@ -1,0 +1,53 @@
+javascript:(function(){
+    const forbiddenRegex = /[█▓▒░▀▄]/;
+
+    function destroyMessage(node) {
+        if (!node || node.nodeType !== 1) return;
+        
+        // نبحث عن حاويات الرسائل (حسب الكود المرفق، الحاوية تحمل كلاس uzr)
+        const containers = node.classList && node.classList.contains('uzr') ? [node] : node.querySelectorAll('.uzr');
+        
+        containers.forEach(container => {
+            // استهداف حاوية النص الخاصة بالرسالة
+            const msgBox = container.querySelector('.u-msg');
+            if (msgBox) {
+                const text = msgBox.innerText || msgBox.textContent || "";
+                if (forbiddenRegex.test(text)) {
+                    // إخفاء فوري للرسالة لتبدو وكأنها لم تُرسل أبداً (Zero-delay)
+                    container.style.display = 'none';
+                    
+                    // استهداف زر الحذف داخل هذه الرسالة تحديداً لتفادي مشكلة تكرار الـ ID
+                    const delBtn = container.querySelector('#delmsg, .delmsg');
+                    if (delBtn) {
+                        delBtn.click();
+                        console.log("🔥 Turbo: تم التقاط ومسح الرسالة المخالفة بنجاح.");
+                    }
+                }
+            }
+        });
+    }
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+                // تأخير 50 ملي ثانية لضمان أن المتصفح قام برندر (Render) النص داخل الـ DOM
+                setTimeout(() => destroyMessage(node), 50);
+            });
+        });
+    });
+
+    // استهداف حاوية الحائط d2bc وحاوية الدردشة d2 لرفع الأداء وتخفيف الضغط على المتصفح
+    const wall = document.getElementById('d2bc');
+    const chat = document.getElementById('d2');
+    
+    if(wall) observer.observe(wall, { childList: true, subtree: true });
+    if(chat) observer.observe(chat, { childList: true, subtree: true });
+    
+    // كإجراء احتياطي في حال تغيرت المعرفات
+    if(!wall && !chat) observer.observe(document.body, { childList: true, subtree: true });
+
+    // مسح الرسائل الموجودة حالياً على الحائط قبل بدء المراقبة
+    destroyMessage(document.body);
+    
+    alert("🚀 تم تفعيل نسخة الـ Turbo بنجاح!");
+})();
