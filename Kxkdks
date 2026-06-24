@@ -1,5 +1,5 @@
 javascript:(function(){
-    const forbiddenRegex = /[█▓▒░▀▄]/;
+    const forbiddenRegex = /[█▓༒░▀▄]/;
 
     function destroyMessage(node) {
         if (!node || node.nodeType !== 1) return;
