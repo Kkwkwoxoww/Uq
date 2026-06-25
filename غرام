@@ -1,0 +1,50 @@
+javascript:(function(){
+    // دالة محاكاة الكتابة والإرسال
+    function performAction(textToType) {
+        const input = document.querySelector('.input-message-input');
+        const sendBtn = document.querySelector('.btn-send');
+        
+        if (input) {
+            // محاكاة كتابة النص
+            input.focus();
+            document.execCommand('insertText', false, textToType);
+            
+            // إرسال حدث React لتحديث الحالة
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // الضغط على زر الإرسال بعد لحظة قصيرة
+            setTimeout(() => {
+                if (sendBtn) {
+                    sendBtn.click();
+                }
+            }, 500);
+        }
+    }
+
+    // كتابة "ويكي" فور التفعيل
+    performAction('ويكي');
+
+    // مراقبة الرسائل
+    const observer = new MutationObserver((mutations) => {
+        // البحث عن كل الرسائل التي تحتوي على نص
+        const messages = document.querySelectorAll('.message-content .text-content');
+        if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            const text = lastMessage.innerText;
+            
+            // إذا كانت الرسالة تحتوي على فواصل وليست "ويكي"
+            if ((text.includes(',') || text.includes('،')) && text !== "ويكي") {
+                const cleanText = text.replace(/[,،]/g, '');
+                
+                // منع التكرار اللانهائي
+                if (text !== cleanText) {
+                    performAction(cleanText);
+                }
+            }
+        }
+    });
+
+    // مراقبة التغيرات في صندوق الرسائل
+    observer.observe(document.querySelector('.chat-input'), { childList: true, subtree: true });
+    alert('تم التفعيل بنجاح! السكربت الآن يراقب الرسائل.');
+})();
