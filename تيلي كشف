@@ -1,0 +1,18 @@
+javascript:(function(){
+    // جمع كافة العناصر المهمة
+    const inputField = document.querySelector('div[contenteditable="true"]');
+    const sendButtons = Array.from(document.querySelectorAll('button')).filter(b => b.innerText.includes('Send') || b.className.includes('send') || b.querySelector('.send'));
+    const messages = Array.from(document.querySelectorAll('.message-content, .text-content')).map(m => m.innerText);
+    
+    // بناء التقرير
+    let report = "=== تقرير فحص تيليجرام ويب ===\n\n";
+    report += "1. حالة صندوق الكتابة: " + (inputField ? "تم العثور عليه (Class: " + inputField.className + ")" : "لم يتم العثور عليه") + "\n\n";
+    report += "2. أزرار الإرسال المكتشفة:\n" + sendButtons.map((b, i) => i + "- Class: " + b.className).join("\n") + "\n\n";
+    report += "3. آخر 5 رسائل في المحادثة:\n" + messages.slice(-5).join("\n-------------------\n") + "\n\n";
+    report += "============================";
+
+    // فتح صفحة جديدة وعرض التقرير
+    const newWindow = window.open("", "_blank");
+    newWindow.document.write("<pre style='padding:20px; font-family:monospace;'>" + report + "</pre>");
+    newWindow.document.close();
+})();
