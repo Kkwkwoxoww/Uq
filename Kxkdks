@@ -3,7 +3,7 @@ javascript:(function(){
     localStorage.removeItem('turbo_my_name');
     alert("⚡ تم تفعيل نظام التصفية الآمن! (الآن يمكنك الإرسال بحرية تامة دون تدخل السكربت).");
 
-    const strictRegex = /^[█▓▒░كت ويت▀▄\s]+$/;
+    const strictRegex = /^[█كت▀▄\s]+$/;
     const blacklistedHashes = new Set();
 
     function nukeMessage(container) {
