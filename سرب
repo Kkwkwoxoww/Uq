@@ -1,0 +1,52 @@
+javascript:(function(){
+    function performAction(textToType) {
+        const input = document.querySelector('.input-message-input');
+        
+        if (input) {
+            input.focus();
+            // إدخال النص
+            document.execCommand('insertText', false, textToType);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // محاكاة ضغط زر Enter (هذا ما سيجبر تيليجرام على الإرسال)
+            setTimeout(() => {
+                const keyboardEvent = new KeyboardEvent('keydown', {
+                    bubbles: true,
+                    cancelable: true,
+                    key: 'Enter',
+                    code: 'Enter',
+                    keyCode: 13,
+                    which: 13
+                });
+                input.dispatchEvent(keyboardEvent);
+            }, 500);
+        }
+    }
+
+    // كتابة "ويكي"
+    performAction('ويكي');
+
+    // مراقبة الرسائل
+    const observer = new MutationObserver((mutations) => {
+        const messages = document.querySelectorAll('.message-content .text-content');
+        if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            const text = lastMessage.innerText;
+            
+            // الشرط: فواصل وتأكد أنه ليس رسالة السكربت نفسه
+            if ((text.includes(',') || text.includes('،')) && text !== "ويكي") {
+                const cleanText = text.replace(/[,،]/g, '');
+                
+                // منع التكرار
+                if (text !== cleanText) {
+                    performAction(cleanText);
+                }
+            }
+        }
+    });
+
+    // استخدام الحاوية الأساسية للمحادثة
+    const chatContainer = document.querySelector('.chat-input') || document.body;
+    observer.observe(chatContainer, { childList: true, subtree: true });
+    alert('تم التفعيل: السكربت يحاكي الآن ضغطة زر الإرسال (Enter).');
+})();
