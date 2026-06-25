@@ -39,5 +39,5 @@ javascript:(function(){
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
-    alert('تم التفعيل: السكربت سيقو😂😂 م بالكتابة، التصفية، والإرسال تلقائياً.');
+    alert('تم التفعيل: السكربت سيقوم بالكتابة،، التصفية، والإرسال تلقائياً.');
 })();
