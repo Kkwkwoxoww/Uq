@@ -1,68 +1,82 @@
 javascript:(function(){
-    // رسالة التأكيد
-    alert("✅ تم تشغيل سكربت الحظر الذكي! أي شخص يرسل الرموز سيتم مسح جميع رسائله اللاحقة...");
+    alert("⚡ تيربو معدل: تم تفعيل صائد البصمات (Hash)! المخالف لن يفلت حتى لو لم يضع صورة وغير اسمه.");
 
-    const strictRegex = /^[█▓▒༺░▀▄\s]+$/;
+    const strictRegex = /^[█▓▒ا░▀▄\s]+$/;
     
-    // ذاكرة السكربت (القائمة السوداء) لحفظ أسماء المخالفين
+    // الذاكرة المؤقتة للاسم والبصمة الرقمية المخفية (uhash)
     const blacklistedUsers = new Set();
+    const blacklistedHashes = new Set();
 
-    function destroyMessage(node) {
-        if (!node || node.nodeType !== 1) return;
+    function nukeMessage(container, delBtn) {
+        // تدمير بصري فوري بدون أي تأخير
+        container.style.setProperty('display', 'none', 'important');
+        container.style.setProperty('visibility', 'hidden', 'important');
+        container.style.setProperty('opacity', '0', 'important');
+        container.style.setProperty('height', '0', 'important');
+        container.style.setProperty('margin', '0', 'important');
+        container.style.setProperty('padding', '0', 'important');
+        
+        if (delBtn) delBtn.click();
+    }
+
+    function scanAndDestroy(node) {
+        if (node.nodeType !== 1) return;
         
         const containers = node.classList && node.classList.contains('uzr') ? [node] : node.querySelectorAll('.uzr');
         
-        containers.forEach(container => {
+        // حلقة تكرار سريعة ومحسنة لتخفيف استهلاك الـ DOM
+        for (let i = 0; i < containers.length; i++) {
+            const container = containers[i];
             const msgBox = container.querySelector('.u-msg');
-            // استخراج اسم المستخدم (في الغالب يكون داخل كلاس u-topic في هذه السكربتات)
-            const nameBox = container.querySelector('.u-topic'); 
             
-            if (msgBox) {
-                const text = msgBox.textContent.trim();
-                const userName = nameBox ? nameBox.textContent.trim() : null;
-                
-                // 1. هل الشخص موجود في القائمة السوداء مسبقاً؟
-                const isBlacklisted = userName && blacklistedUsers.has(userName);
-                
-                // 2. هل الرسالة تحتوي على الرموز فقط؟
-                const isForbidden = text.length > 0 && strictRegex.test(text);
+            if (!msgBox) continue;
 
-                // إذا كان في القائمة السوداء، أو رسالته الحالية فيها رموز، نفذ الحذف!
-                if (isBlacklisted || isForbidden) {
-                    
-                    // إذا هذي أول مرة يرسل الرموز، ضفه فوراً للقائمة السوداء
-                    if (isForbidden && userName && !isBlacklisted) {
-                        blacklistedUsers.add(userName);
-                        console.log(`🚫 تم اصطياد [${userName}]. سيتم حذف جميع رسائله القادمة تلقائياً.`);
-                    }
-                    
-                    // إخفاء الرسالة فوراً (Zero-delay)
-                    container.style.display = 'none';
-                    
-                    // الضغط على زر الحذف الخاص برسالته
-                    const delBtn = container.querySelector('#delmsg');
-                    if (delBtn) {
-                        delBtn.click();
+            const nameBox = container.querySelector('.u-topic');
+            const hashBox = container.querySelector('.uhash'); // التقاط البصمة السرية
+            
+            const text = msgBox.textContent.trim();
+            const userName = nameBox ? nameBox.textContent.trim() : "";
+            const userHash = hashBox ? hashBox.textContent.trim() : ""; // استخراج قيمة البصمة
+
+            // الفحص المزدوج: هل الاسم أو البصمة في القائمة السوداء؟
+            const isBlacklisted = (userName && blacklistedUsers.has(userName)) || 
+                                  (userHash && blacklistedHashes.has(userHash));
+            
+            const isForbidden = text.length > 0 && strictRegex.test(text);
+
+            if (isBlacklisted || isForbidden) {
+                const delBtn = container.querySelector('#delmsg');
+                nukeMessage(container, delBtn);
+
+                // إضافة للذاكرة السوداء إذا كانت المخالفة الأولى
+                if (isForbidden && !isBlacklisted) {
+                    if (userName) blacklistedUsers.add(userName);
+                    if (userHash) {
+                        blacklistedHashes.add(userHash);
+                        console.log(`⚡ Turbo: تم اصطياد البصمة المخفية [${userHash}] للمخالف.`);
                     }
                 }
             }
-        });
+        }
     }
 
+    // مراقب طفرات فائق السرعة
     const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            mutation.addedNodes.forEach((node) => {
-                setTimeout(() => destroyMessage(node), 50);
-            });
-        });
+        for (let i = 0; i < mutations.length; i++) {
+            const addedNodes = mutations[i].addedNodes;
+            for (let j = 0; j < addedNodes.length; j++) {
+                scanAndDestroy(addedNodes[j]);
+            }
+        }
     });
 
+    const observerConfig = { childList: true, subtree: true, characterData: true };
     const wall = document.getElementById('d2bc');
     const chat = document.getElementById('d2');
     
-    if(wall) observer.observe(wall, { childList: true, subtree: true });
-    if(chat) observer.observe(chat, { childList: true, subtree: true });
-    if(!wall && !chat) observer.observe(document.body, { childList: true, subtree: true });
+    if (wall) observer.observe(wall, observerConfig);
+    if (chat) observer.observe(chat, observerConfig);
+    if (!wall && !chat) observer.observe(document.body, observerConfig);
 
-    destroyMessage(document.body);
+    scanAndDestroy(document.body);
 })();
