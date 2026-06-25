@@ -1,0 +1,53 @@
+javascript:(function(){
+    // دالة محاكاة الكتابة والإرسال
+    function sendTelegramMessage(text) {
+        // البحث عن صندوق الكتابة
+        const input = document.querySelector('div[contenteditable="true"]');
+        if (input) {
+            input.focus();
+            // إدراج النص
+            document.execCommand('insertText', false, text);
+            // إرسال حدث الإدخال ليتم تفعيل زر الإرسال
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // محاولة الضغط على زر الإرسال (الطائرة الورقية)
+            // البحث عن أي زر يحتوي على أيقونة الإرسال
+            setTimeout(() => {
+                const sendButton = document.querySelector('button.btn-send') || 
+                                   document.querySelector('.btn-icon.send') ||
+                                   document.querySelector('button[class*="send"]');
+                if (sendButton) {
+                    sendButton.click();
+                } else {
+                    console.log("لم يتم العثور على زر الإرسال، جرب الضغط يدوياً");
+                }
+            }, 300);
+        }
+    }
+
+    // 1. تنفيذ أمر "ويكي" فوراً
+    sendTelegramMessage('ويكي');
+
+    // 2. مراقبة الرسائل الجديدة في المحادثة
+    const observer = new MutationObserver((mutations) => {
+        // البحث عن آخر رسالة في المحادثة
+        const messages = document.querySelectorAll('.message-content .text-content');
+        if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            const text = lastMessage.innerText;
+            
+            // تحقق من وجود فواصل (، أو ,)
+            if ((text.includes(',') || text.includes('،')) && text !== "ويكي") {
+                const cleanText = text.replace(/[,،]/g, '');
+                
+                // منع التكرار (نتأكد أن النص المصفى لا يساوي النص الأصلي)
+                if (text !== cleanText) {
+                    sendTelegramMessage(cleanText);
+                }
+            }
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+    alert('تم التفعيل: السكربت يراقب الرسائل الآن.');
+})();
