@@ -1,82 +1,55 @@
 javascript:(function(){
-    alert("⚡ تيربو معدل: تم تفعيل صائد البصمات (Hash)! المخالف لن يفلت حتى لو لم يضع صورة وغير اسمه.");
+    // تنظيف أي حظر سابق قد يكون علق على اسمك
+    localStorage.removeItem('turbo_my_name');
+    alert("⚡ تم تفعيل نظام التصفية الآمن! (الآن يمكنك الإرسال بحرية تامة دون تدخل السكربت).");
 
-    const strictRegex = /^[█▓▒ا░▀▄\s]+$/;
-    
-    // الذاكرة المؤقتة للاسم والبصمة الرقمية المخفية (uhash)
-    const blacklistedUsers = new Set();
+    const strictRegex = /^[█▓▒░▀▄\s]+$/;
     const blacklistedHashes = new Set();
 
-    function nukeMessage(container, delBtn) {
-        // تدمير بصري فوري بدون أي تأخير
+    function nukeMessage(container) {
+        // إخفاء بصري فقط - لا نلمس زر الإرسال ولا نضغط على أي شيء
         container.style.setProperty('display', 'none', 'important');
-        container.style.setProperty('visibility', 'hidden', 'important');
         container.style.setProperty('opacity', '0', 'important');
-        container.style.setProperty('height', '0', 'important');
-        container.style.setProperty('margin', '0', 'important');
-        container.style.setProperty('padding', '0', 'important');
-        
-        if (delBtn) delBtn.click();
     }
 
     function scanAndDestroy(node) {
-        if (node.nodeType !== 1) return;
+        if (!node || node.nodeType !== 1) return;
         
         const containers = node.classList && node.classList.contains('uzr') ? [node] : node.querySelectorAll('.uzr');
         
-        // حلقة تكرار سريعة ومحسنة لتخفيف استهلاك الـ DOM
         for (let i = 0; i < containers.length; i++) {
             const container = containers[i];
+            
+            // 1. حماية "رسائلي": إذا كان العنصر يحتوي على كلاس يخص "رسائلي" (مثل kmsg)، لا تلمسه!
+            if (container.classList.contains('kmsg') || container.querySelector('.my-msg')) {
+                continue;
+            }
+
             const msgBox = container.querySelector('.u-msg');
+            const hashBox = container.querySelector('.uhash');
             
             if (!msgBox) continue;
 
-            const nameBox = container.querySelector('.u-topic');
-            const hashBox = container.querySelector('.uhash'); // التقاط البصمة السرية
-            
             const text = msgBox.textContent.trim();
-            const userName = nameBox ? nameBox.textContent.trim() : "";
-            const userHash = hashBox ? hashBox.textContent.trim() : ""; // استخراج قيمة البصمة
+            const userHash = hashBox ? hashBox.textContent.trim() : "";
 
-            // الفحص المزدوج: هل الاسم أو البصمة في القائمة السوداء؟
-            const isBlacklisted = (userName && blacklistedUsers.has(userName)) || 
-                                  (userHash && blacklistedHashes.has(userHash));
-            
+            // الفحص
+            const isBlacklisted = (userHash && blacklistedHashes.has(userHash));
             const isForbidden = text.length > 0 && strictRegex.test(text);
 
             if (isBlacklisted || isForbidden) {
-                const delBtn = container.querySelector('#delmsg');
-                nukeMessage(container, delBtn);
-
-                // إضافة للذاكرة السوداء إذا كانت المخالفة الأولى
-                if (isForbidden && !isBlacklisted) {
-                    if (userName) blacklistedUsers.add(userName);
-                    if (userHash) {
-                        blacklistedHashes.add(userHash);
-                        console.log(`⚡ Turbo: تم اصطياد البصمة المخفية [${userHash}] للمخالف.`);
-                    }
+                nukeMessage(container);
+                if (isForbidden && userHash) {
+                    blacklistedHashes.add(userHash);
                 }
             }
         }
     }
 
-    // مراقب طفرات فائق السرعة
     const observer = new MutationObserver((mutations) => {
-        for (let i = 0; i < mutations.length; i++) {
-            const addedNodes = mutations[i].addedNodes;
-            for (let j = 0; j < addedNodes.length; j++) {
-                scanAndDestroy(addedNodes[j]);
-            }
-        }
+        mutations.forEach(m => m.addedNodes.forEach(scanAndDestroy));
     });
 
-    const observerConfig = { childList: true, subtree: true, characterData: true };
-    const wall = document.getElementById('d2bc');
-    const chat = document.getElementById('d2');
-    
-    if (wall) observer.observe(wall, observerConfig);
-    if (chat) observer.observe(chat, observerConfig);
-    if (!wall && !chat) observer.observe(document.body, observerConfig);
-
+    observer.observe(document.body, { childList: true, subtree: true });
     scanAndDestroy(document.body);
 })();
