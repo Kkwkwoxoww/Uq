@@ -1,0 +1,25 @@
+javascript:(function(){
+    // دالة كتابة "ويكي"
+    document.execCommand('insertText', false, 'ويكي');
+    
+    // مراقبة الرسائل المرسلة في تليجرام ويب
+    const observer = new MutationObserver((mutations) => {
+        const messages = document.querySelectorAll('.message-content .text-content');
+        if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            const text = lastMessage.innerText;
+            if (text.includes(',') || text.includes('،')) {
+                const cleanText = text.replace(/[,،]/g, '');
+                // وضع النص المصفى في صندوق الكتابة
+                const input = document.querySelector('div[contenteditable="true"]');
+                if(input) {
+                    input.focus();
+                    document.execCommand('insertText', false, cleanText);
+                }
+            }
+        }
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+    alert('تم تفعيل السكربت، الآن سيقوم بالتصفية تلقائياً!');
+})();
