@@ -1,0 +1,43 @@
+javascript:(function(){
+    // دالة إرسال النص
+    function sendTelegramMessage(text) {
+        const input = document.querySelector('div[contenteditable="true"]');
+        if (input) {
+            input.focus();
+            document.execCommand('insertText', false, text);
+            // إرسال حدث للمتصفح أن النص تم إدخاله
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            // البحث عن زر الإرسال والضغط عليه
+            setTimeout(() => {
+                const sendButton = document.querySelector('button.btn-send') || document.querySelector('.btn-icon.send');
+                if (sendButton) sendButton.click();
+            }, 500);
+        }
+    }
+
+    // 1. كتابة كلمة ويكي فوراً
+    sendTelegramMessage('ويكي');
+
+    // 2. مراقبة الرسائل الجديدة لتصفية الفواصل
+    const observer = new MutationObserver((mutations) => {
+        const messages = document.querySelectorAll('.message-content .text-content');
+        if (messages.length > 0) {
+            const lastMessage = messages[messages.length - 1];
+            const text = lastMessage.innerText;
+            
+            // تحقق إذا كانت الرسالة تحتوي على فواصل
+            if ((text.includes(',') || text.includes('،')) && text !== "ويكي") {
+                const cleanText = text.replace(/[,،]/g, '');
+                
+                // منع التكرار اللانهائي (إذا كان النص المصفى هو نفس النص الأصلي)
+                if (text !== cleanText) {
+                    sendTelegramMessage(cleanText);
+                }
+            }
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+    alert('تم التفعيل: السكربت سيقوم بالكتابة، التصفية، والإرسال تلقائياً.');
+})();
